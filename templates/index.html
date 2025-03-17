@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Microsoft Graph API Tester</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Microsoft Graph API Tester</h1>
+        
+        <!-- Authentication Section -->
+        <div class="card">
+            <h2>Authentication</h2>
+            <form onsubmit="callApi(event, 'get_token')">
+                <input type="text" name="tenant" placeholder="Tenant ID" required>
+                <input type="text" name="client_id" placeholder="Client ID" required>
+                <input type="password" name="client_secret" placeholder="Client Secret" required>
+                <input type="password" name="refresh_token" placeholder="Refresh Token" required>
+                <button type="submit">Get Access Token</button>
+            </form>
+            <div class="response" id="get_token-response"></div>
+        </div>
+        
+        <!-- API Cards for Other Endpoints -->
+        {% for api_name, config in apis.items() if api_name != 'get_token' %}
+        <div class="card">
+            <h2>{{ config.description }}</h2>
+            <button class="info-btn" onclick="showApiDetails('{{ api_name }}')">Get Details</button>
+            <form onsubmit="callApi(event, '{{ api_name }}')">
+                {% for var in config.variables %}
+                    {% if var != "None (access token is required)" %}
+                        <input type="text" name="{{ var }}" placeholder="{{ var | replace('_', ' ') | title }}" required>
+                    {% endif %}
+                {% endfor %}
+                {% if api_name == 'send_message' or api_name == 'send_reply' %}
+                <textarea name="body" placeholder="JSON Payload" required>
+{% if api_name == 'send_message' %}
+{
+    "subject": "Your Subject Here",
+    "body": {
+        "contentType": "html",
+        "content": "Your message content here"
+    },
+    "attachments": [],
+    "mentions": [
+        {
+            "id": 0,
+            "mentionText": "Jane Smith",
+            "mentioned": {
+                "user": {
+                    "displayName": "Jane Smith",
+                    "id": "ef1c916a-3135-4417-ba27-8eb7bd084193",
+                    "userIdentityType": "aadUser"
+                }
+            }
+        }
+    ]
+}
+{% elif api_name == 'send_reply' %}
+{
+    "subject": "Your Reply Subject Here",
+    "body": {
+        "contentType": "html",
+        "content": "Your reply content here"
+    },
+    "mentions": []
+}
+{% endif %}
+                </textarea>
+                {% endif %}
+                <button type="submit">Test {{ api_name | replace('_', ' ') | title }}</button>
+            </form>
+            <div class="response" id="{{ api_name }}-response"></div>
+        </div>
+        {% endfor %}
+        
+        <!-- Modal for API Details -->
+        <div id="apiModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3 id="modal-title"></h3>
+                <div id="modal-content"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
